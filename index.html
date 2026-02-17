@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocolo 3 Minutos</title>
+
+<style>
+
+:root {
+    --primary: #5b8cff;
+    --primary-soft: #e7efff;
+    --text-main: #1f2937;
+    --text-soft: #6b7280;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #f8fafc, #eef2f7);
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+}
+
+.container {
+    width: 100%;
+    max-width: 520px;
+    background: white;
+    border-radius: 24px;
+    padding: 40px 36px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+h3 {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+p {
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+.circle-wrapper {
+    height: 240px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle {
+    width: 190px;
+    height: 190px;
+    border-radius: 45% 55% 60% 40% / 50% 40% 60% 50%;
+    background: radial-gradient(circle at 30% 30%, #7aa8ff, #5b8cff);
+    box-shadow:
+        0 20px 50px rgba(91,140,255,0.28),
+        inset 0 0 40px rgba(255,255,255,0.25);
+    transform: scale(1);
+    transition: transform 0.12s linear;
+    animation: blobMorph 14s infinite ease-in-out;
+}
+
+@keyframes blobMorph {
+    0% { border-radius: 45% 55% 60% 40% / 50% 40% 60% 50%; }
+    50% { border-radius: 60% 40% 45% 55% / 40% 60% 40% 60%; }
+    100% { border-radius: 45% 55% 60% 40% / 50% 40% 60% 50%; }
+}
+
+#phaseTitle {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+#instruction {
+    font-size: 14px;
+    min-height: 50px;
+    white-space: pre-line;
+    color: var(--text-soft);
+}
+
+#timer {
+    margin-top: 12px;
+    font-weight: 500;
+    color: var(--text-soft);
+}
+
+.scale {
+    margin-top: 20px;
+}
+
+.scale button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    margin: 5px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.scale button:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    margin-top: 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(91,140,255,0.35);
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    font-family: inherit;
+    resize: none;
+}
+
+.hidden { display: none; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="screen1">
+<h3>De 0 a 10, quão sobrecarregada sua mente está agora?</h3>
+<div class="scale" id="scale1"></div>
+</div>
+
+<div id="prep" class="hidden">
+<h3>Você fará um exercício de 3 minutos.</h3>
+<p>Siga as instruções na tela.</p>
+</div>
+
+<div id="countdown" class="hidden">
+<h3 id="countText">3</h3>
+<p>Começando...</p>
+</div>
+
+<div id="exercise" class="hidden">
+<h3 id="phaseTitle">Respiração</h3>
+<p id="instruction"></p>
+
+<div class="circle-wrapper">
+<div class="circle" id="circle"></div>
+</div>
+
+<p id="timer">03:00</p>
+</div>
+
+<div id="screen2" class="hidden">
+<h3>Agora, de 0 a 10, quão sobrecarregada está a sua mente?</h3>
+<div class="scale" id="scale2"></div>
+
+<p id="result"></p>
+
+<h4>Como você avalia essa experiência?</h4>
+<label><input type="radio" name="evaluation" value="Útil"> Útil</label>
+<label><input type="radio" name="evaluation" value="Neutra"> Neutra</label>
+<label><input type="radio" name="evaluation" value="Não ajudou"> Não ajudou</label>
+
+<textarea id="comment" placeholder="Deixe seu comentário! Você usaria novamente?  (opcional)"></textarea>
+<br>
+<button onclick="finishSession()">Concluir Sessão</button>
+</div>
+
+<div id="endScreen" class="hidden">
+<h3>Sessão finalizada.</h3>
+<p>Obrigado! Espero que tenha sido útil.</p>
+</div>
+
+</div>
+
+<script>
+
+let initialScore = null;
+let finalScore = null;
+
+/* ========= NOVO: SESSION ID ========= */
+
+let sessionId = localStorage.getItem("sessionId");
+
+if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("sessionId", sessionId);
+}
+
+/* ========= NOVO: GOOGLE SCRIPT URL ========= */
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQGwOveu2GXNf6gl2rkczj5twfsYGRwvT0pKFUmAGHafF5IDMvD-ffwrS2SW1vsUPH/exec";
+
+/* ============================================ */
+
+const totalDuration = 180000;
+const firstPhaseDuration = 110000;
+const prepDuration = 2700;
+
+const inhale = 4000;
+const exhale = 4000;
+const cycle = inhale + exhale;
+
+let startTime;
+let animationFrame;
+
+function createScale(containerId, callback) {
+    const container = document.getElementById(containerId);
+    for (let i = 0; i <= 10; i++) {
+        const btn = document.createElement("button");
+        btn.innerText = i;
+        btn.onclick = () => callback(i);
+        container.appendChild(btn);
+    }
+}
+
+createScale("scale1", (score) => {
+    initialScore = score;
+    document.getElementById("screen1").classList.add("hidden");
+    document.getElementById("prep").classList.remove("hidden");
+
+    setTimeout(() => {
+        document.getElementById("prep").classList.add("hidden");
+        startCountdown();
+    }, prepDuration);
+});
+
+createScale("scale2", (score) => {
+    finalScore = score;
+    document.getElementById("result").innerText =
+        `Sua percepção de sobrecarga passou de ${initialScore} para ${finalScore}.`;
+});
+
+function startCountdown() {
+    document.getElementById("countdown").classList.remove("hidden");
+    let count = 3;
+    const el = document.getElementById("countText");
+    el.innerText = count;
+
+    const interval = setInterval(() => {
+        count--;
+        if (count === 0) {
+            clearInterval(interval);
+            document.getElementById("countdown").classList.add("hidden");
+            startExercise();
+        } else {
+            el.innerText = count;
+        }
+    }, 1000);
+}
+
+function startExercise() {
+    document.getElementById("exercise").classList.remove("hidden");
+    startTime = Date.now();
+    animate();
+}
+
+function animate() {
+    const now = Date.now();
+    const elapsed = now - startTime;
+    const remaining = totalDuration - elapsed;
+
+    if (remaining <= 0) {
+        cancelAnimationFrame(animationFrame);
+        endExercise();
+        return;
+    }
+
+    updateTimer(remaining);
+    updatePhase(elapsed);
+
+    animationFrame = requestAnimationFrame(animate);
+}
+
+function endExercise() {
+    document.getElementById("exercise").classList.add("hidden");
+    document.getElementById("screen2").classList.remove("hidden");
+}
+
+function finishSession() {
+
+    if (finalScore === null) {
+        alert("Selecione a nota final antes de finalizar.");
+        return;
+    }
+
+    const comment = document.getElementById("comment").value;
+    const evaluation = document.querySelector('input[name="evaluation"]:checked')?.value || "";
+
+    /* ========= NOVO: ENVIO PARA GOOGLE SHEETS ========= */
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            sessionId: sessionId,
+            initialScore: initialScore,
+            finalScore: finalScore,
+            reduction: initialScore - finalScore,
+            evaluation: evaluation,
+            comment: comment,
+            timestamp: new Date().toISOString()
+        })
+    });
+
+    /* =================================================== */
+
+    document.getElementById("screen2").classList.add("hidden");
+    document.getElementById("endScreen").classList.remove("hidden");
+}
+
+function updateTimer(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    document.getElementById("timer").innerText =
+        (m < 10 ? "0" : "") + m + ":" +
+        (s < 10 ? "0" : "") + s;
+}
+
+function updatePhase(elapsed) {
+    const instruction = document.getElementById("instruction");
+    const circle = document.getElementById("circle");
+    const phaseTitle = document.getElementById("phaseTitle");
+
+    const breathingElapsed = elapsed % cycle;
+
+    const progress = breathingElapsed < inhale
+        ? breathingElapsed / inhale
+        : (breathingElapsed - inhale) / exhale;
+
+    const smooth = 0.5 - Math.cos(progress * Math.PI) / 2;
+
+    let scale;
+
+    if (elapsed <= firstPhaseDuration) {
+        phaseTitle.innerText = "Respiração";
+    } else {
+        phaseTitle.innerText = "Respiração + Percepção";
+    }
+
+    if (breathingElapsed < inhale) {
+        scale = 1 + (0.14 * smooth);
+        instruction.innerText = "Puxe o AR lentamente pelo nariz.";
+    } else {
+        scale = 1.14 - (0.14 * smooth);
+        instruction.innerText = "Solte o AR suavemente.";
+    }
+
+    circle.style.transform = `scale(${scale})`;
+
+    if (elapsed > firstPhaseDuration) {
+        instruction.innerText += 
+        "\n\nSem mover os olhos, perceba o que está nas bordas da sua visão.";
+    }
+}
+
+</script>
+
+</body>
+</html>
