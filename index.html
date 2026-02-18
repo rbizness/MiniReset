@@ -141,6 +141,23 @@ textarea {
 
 .hidden { display: none; }
 
+.brand {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.brand h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.tagline {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
 </style>
 </head>
 
@@ -148,6 +165,11 @@ textarea {
 
 <div class="container">
 
+<div class="brand">
+  <h1>Mini Reset</h1>
+  <p class="tagline">3 minutos para aliviar a sobrecarga mental</p>
+</div>
+    
 <div id="screen1">
 <h3>De 0 a 10, quão sobrecarregada sua mente está agora?</h3>
 <div class="scale" id="scale1"></div>
@@ -384,4 +406,5 @@ function updatePhase(elapsed) {
 
 </body>
 </html>
+
 
