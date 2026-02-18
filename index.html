@@ -146,20 +146,21 @@ textarea {
 
 .brand {
     text-align: center;
-    margin-bottom: 18px;
+    margin-bottom: 24px;
 }
 
 .brand h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: clamp(20px, 4vw, 24px);
     font-weight: 600;
+    letter-spacing: -0.3px;
 }
 
 .tagline {
     margin-top: 4px;
-    font-size: 13px;
+    font-size: clamp(12px, 3vw, 14px);
     color: var(--text-soft);
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 @media (max-width: 480px) {
@@ -432,6 +433,7 @@ function updatePhase(elapsed) {
 
 </body>
 </html>
+
 
 
 
