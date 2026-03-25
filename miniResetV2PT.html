@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Reset</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #fff; color: #1a1a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #app { width: 100%; max-width: 420px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; margin: 0 auto; }
+  .screen { display: none; flex-direction: column; align-items: center; width: 100%; }
+  .screen.active { display: flex; }
+  .label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 2rem; }
+  .headline { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; color: #1a1a1a; text-align: center; line-height: 1.35; margin-bottom: 0.75rem; }
+  .welcome-desc { font-size: 14px; color: #666; text-align: center; line-height: 1.7; margin-bottom: 0.5rem; width: 100%; max-width: 340px; }
+  .welcome-cta { font-size: 14px; color: #444; text-align: center; line-height: 1.7; margin-bottom: 2rem; width: 100%; max-width: 340px; font-weight: 500; }
+  .sub { font-size: 14px; color: #666; text-align: center; line-height: 1.6; margin-bottom: 2rem; width: 100%; max-width: 340px; }
+  .emoji-row { display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: center; }
+  .emoji-btn { width: 52px; height: 52px; border-radius: 10px; border: 1.5px solid #ccc; background: #fff; font-size: 22px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; outline: none; -webkit-appearance: none; }
+  .emoji-btn:hover { border-color: #999; }
+  .emoji-btn.selected { border-radius: 50%; border: 1.5px solid #ccc; outline: 2px solid #1a1a1a; outline-offset: 2px; background: #f5f5f5; }
+  .btn-primary { background: #1a1a1a; color: #fff; border: none; border-radius: 100px; padding: 14px 36px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity 0.2s, transform 0.15s; opacity: 0.25; pointer-events: none; -webkit-appearance: none; }
+  .btn-primary.ready { opacity: 1; pointer-events: all; }
+  .btn-primary.ready:hover { opacity: 0.8; }
+  .btn-primary.ready:active { transform: scale(0.97); }
+  .divider { width: 32px; height: 1px; background: #e0e0e0; margin: 1.5rem auto; }
+  .progress-bar { width: 100%; height: 2px; background: #e8e8e8; border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: #1a1a1a; border-radius: 2px; transition: width 1s linear; width: 0%; }
+  .timeline { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 0.75rem; }
+  .tl-dot { width: 6px; height: 6px; border-radius: 50%; background: #ddd; transition: background 0.6s; }
+  .tl-dot.done { background: #1a1a1a; }
+  .tl-dot.active { background: #888; }
+  .tl-line { width: 20px; height: 1px; background: #e0e0e0; }
+  .phase-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 1.25rem; font-weight: 500; transition: opacity 0.5s; }
+  .countdown-small { font-size: 13px; color: #bbb; text-align: center; height: 18px; margin-bottom: 8px; transition: opacity 0.5s; }
+  .phase-zone { width: 100%; position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
+  .phase-block { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+  .phase-block.visible { opacity: 1; pointer-events: all; }
+  .instr { font-size: 15px; color: #555; text-align: center; line-height: 1.7; max-width: 300px; white-space: pre-line; transition: opacity 0.5s ease; min-height: 44px; }
+  .breath-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .breath-ring { width: 130px; height: 130px; border-radius: 50%; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; }
+  .breath-inner { width: 56px; height: 56px; border-radius: 50%; background: #ddd; opacity: 0.6; transition: width 4s ease-in-out, height 4s ease-in-out, background 4s ease-in-out, opacity 4s ease-in-out; }
+  .breath-inner.expand { width: 100px; height: 100px; background: #bbb; opacity: 1; }
+  .breath-word { font-family: 'DM Serif Display', serif; font-size: 17px; font-style: italic; color: #777; min-height: 24px; text-align: center; transition: opacity 0.2s ease; }
+  .focus-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+  .focus-instr { font-size: 14px; color: #444; text-align: center; max-width: 260px; line-height: 1.6; min-height: 44px; transition: opacity 0.4s ease; font-weight: 400; white-space: pre-line; }
+  .focus-instr.highlight { color: #1a1a1a; font-weight: 500; }
+  .focus-box { width: 260px; height: 160px; border-radius: 12px; border: 1.5px solid #ccc; background: #f8f8f8; position: relative; overflow: hidden; }
+  .focus-dot { width: 16px; height: 16px; background: #1a1a1a; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; box-shadow: 0 0 0 4px rgba(26,26,26,0.08); }
+  .ambient-dot { width: 7px; height: 7px; border-radius: 50%; position: absolute; background: #999; opacity: 0; transition: opacity 1.8s ease, transform 3s ease; }
+  .eval-section { width: 100%; }
+  .eval-label { font-size: 13px; color: #888; margin-bottom: 0.6rem; text-align: center; }
+  .eval-row { display: flex; gap: 8px; justify-content: center; }
+  .eval-btn { padding: 9px 18px; border-radius: 100px; border: 1.5px solid #ddd; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #888; cursor: pointer; transition: all 0.2s ease; -webkit-appearance: none; }
+  .eval-btn:hover { border-color: #bbb; color: #444; }
+  .eval-btn.selected { background: #1a1a1a; border-color: #1a1a1a; color: #fff; font-weight: 500; }
+  .eval-btn.selected::before { content: '✓ '; font-size: 12px; }
+  .result-card { width: 100%; border: 1.5px solid #ddd; border-radius: 12px; padding: 1.25rem 1.5rem; background: #fff; margin-bottom: 1rem; }
+  .result-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+  .result-row + .result-row { border-top: 1px solid #eee; }
+  .result-label-text { font-size: 13px; color: #666; }
+  .result-val { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+  .result-num { font-size: 13px; color: #aaa; }
+  .delta-badge { font-size: 12px; font-weight: 500; padding: 3px 12px; border-radius: 100px; background: #e6f4ee; color: #2a7a50; }
+  .delta-badge.neutral { background: #f0f0f0; color: #666; }
+  .delta-badge.down { background: #fdf0f0; color: #a04040; }
+  .comment-box { width: 100%; border: 1.5px solid #ddd; border-radius: 10px; padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1a1a1a; resize: none; height: 76px; outline: none; transition: border-color 0.2s; }
+  .comment-box:focus { border-color: #999; }
+  .comment-box::placeholder { color: #bbb; }
+  .sending-msg { font-size: 13px; color: #aaa; text-align: center; margin-top: 0.5rem; min-height: 20px; }
+  .completion-box { width: 100%; border: 1.5px solid #ddd; border-radius: 12px; padding: 1.25rem 1.5rem; background: #f8f8f8; text-align: center; opacity: 0; transition: opacity 0.6s ease; }
+  .completion-box.visible { opacity: 1; }
+  .completion-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .completion-code { font-family: 'DM Serif Display', serif; font-size: 26px; color: #1a1a1a; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .completion-hint { font-size: 12px; color: #aaa; line-height: 1.5; }
+  .intro-steps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; width: 100%; }
+  .intro-step { display: flex; align-items: center; gap: 12px; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa; flex-shrink: 0; }
+  .step-text { font-size: 14px; color: #666; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="s-welcome">
+    <div class="label">Mini Reset</div>
+    <div class="headline">Menos de 3 minutos.</div>
+    <div class="welcome-desc">Cabeça cheia, pensamentos confusos, dificuldade de foco? Isso é sobrecarga mental.</div>
+    <div class="welcome-cta">O Mini Reset foi criado para ajudar nisso.</div>
+    <div class="intro-steps">
+      <div class="intro-step"><div class="step-num">1</div><div class="step-text">Indica como sua mente está agora</div></div>
+      <div class="intro-step"><div class="step-num">2</div><div class="step-text">Segue o protocolo guiado</div></div>
+      <div class="intro-step"><div class="step-num">3</div><div class="step-text">Indica como está sua mente após</div></div>
+    </div>
+    <button class="btn-primary ready" onclick="goScreen('s-intro')">Vamos lá</button>
+  </div>
+
+  <div class="screen" id="s-intro">
+    <div class="label">Mini Reset</div>
+    <div class="headline">Como está<br>sua mente agora?</div>
+    <div class="sub">Toque em como você se sente neste momento.</div>
+    <div class="emoji-row">
+      <button class="emoji-btn" data-val="1" onclick="selectEmoji(this,'before')">🤯</button>
+      <button class="emoji-btn" data-val="2" onclick="selectEmoji(this,'before')">😵</button>
+      <button class="emoji-btn" data-val="3" onclick="selectEmoji(this,'before')">😐</button>
+      <button class="emoji-btn" data-val="4" onclick="selectEmoji(this,'before')">🙂</button>
+      <button class="emoji-btn" data-val="5" onclick="selectEmoji(this,'before')">😌</button>
+    </div>
+    <button class="btn-primary" id="btn-start" onclick="startReset()">Começar</button>
+  </div>
+
+  <div class="screen" id="s-reset">
+    <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+    <div class="timeline" id="tl"></div>
+    <div class="phase-label" id="phase-lbl"></div>
+    <div class="countdown-small" id="countdown"></div>
+    <div class="phase-zone" id="phase-zone"></div>
+  </div>
+
+  <div class="screen" id="s-checkin">
+    <div class="label">Quase lá</div>
+    <div class="headline">Como você<br>se sente agora?</div>
+    <div class="sub">Toque em como você se sente agora.</div>
+    <div class="emoji-row">
+      <button class="emoji-btn" data-val="1" onclick="selectEmoji(this,'after')">🤯</button>
+      <button class="emoji-btn" data-val="2" onclick="selectEmoji(this,'after')">😵</button>
+      <button class="emoji-btn" data-val="3" onclick="selectEmoji(this,'after')">😐</button>
+      <button class="emoji-btn" data-val="4" onclick="selectEmoji(this,'after')">🙂</button>
+      <button class="emoji-btn" data-val="5" onclick="selectEmoji(this,'after')">😌</button>
+    </div>
+    <div class="eval-section">
+      <div class="eval-label">Como foi a experiência?</div>
+      <div class="eval-row">
+        <button class="eval-btn" data-eval="Útil" onclick="selectEval(this)">Útil</button>
+        <button class="eval-btn" data-eval="Neutra" onclick="selectEval(this)">Neutra</button>
+        <button class="eval-btn" data-eval="Não ajudou" onclick="selectEval(this)">Não ajudou</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-primary" id="btn-finish" onclick="showResult()">Ver resultado</button>
+  </div>
+
+  <div class="screen" id="s-result">
+    <div class="label">Sessão concluída</div>
+    <div class="headline" id="result-headline"></div>
+    <div class="divider"></div>
+    <div class="result-card">
+      <div class="result-row">
+        <span class="result-label-text">Antes</span>
+        <div class="result-val"><span id="res-before-emoji"></span><span class="result-num" id="res-before-num"></span></div>
+      </div>
+      <div class="result-row">
+        <span class="result-label-text">Depois</span>
+        <div class="result-val"><span id="res-after-emoji"></span><span class="result-num" id="res-after-num"></span></div>
+      </div>
+      <div class="result-row">
+        <span class="result-label-text">Variação</span>
+        <div class="result-val"><span class="delta-badge" id="res-delta"></span></div>
+      </div>
+    </div>
+    <textarea class="comment-box" id="comment" placeholder="O que você sentiu? Algo que chamou atenção?"></textarea>
+    <div class="divider"></div>
+    <button class="btn-primary ready" id="btn-submit" onclick="submitSession()">Concluir</button>
+    <div class="sending-msg" id="sending-msg"></div>
+  </div>
+
+  <div class="screen" id="s-end">
+    <div class="label">Mini Reset</div>
+    <div class="headline">Obrigado.</div>
+    <div class="sub">Esperamos que tenha sido útil.</div>
+    <div class="divider"></div>
+    <div class="completion-box" id="completion-box">
+      <div class="completion-label">Seu código de conclusão</div>
+      <div class="completion-code">RESET-2026</div>
+      <div class="completion-hint">Cole esse código no Prolific<br>para finalizar sua participação.</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-primary ready" onclick="restart()">Novo reset</button>
+  </div>
+
+</div>
+<script>
+  const emojis = ['','🤯','😵','😐','🙂','😌'];
+  const emojiLabels = ['','Sobrecarga total','Confuso','Neutro','Mais tranquilo','Com clareza'];
+  let beforeVal=null, afterVal=null, evalVal=null;
+  let phaseTimer=null, breathTimer=null, focusTimer=null, focusInstrTimer=null;
+  let currentBlock=null, sessionStart=null;
+
+  let userId = localStorage.getItem('mr_user_id');
+  if (!userId) { userId = crypto.randomUUID(); localStorage.setItem('mr_user_id', userId); }
+
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJ1XsEj1YntkOyV7timfvA85DrQfXqHCuIml13CmAcSgT1Ti0qrn7lU4Qe1YIg-89l/exec';
+
+  function checkFinishReady() {
+    if (afterVal && evalVal) document.getElementById('btn-finish').classList.add('ready');
+    else document.getElementById('btn-finish').classList.remove('ready');
+  }
+
+  function selectEmoji(btn, type) {
+    btn.closest('.emoji-row').querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const val = parseInt(btn.dataset.val);
+    if (type === 'before') { beforeVal = val; document.getElementById('btn-start').classList.add('ready'); }
+    else { afterVal = val; checkFinishReady(); }
+  }
+
+  function selectEval(btn) {
+    document.querySelectorAll('.eval-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    evalVal = btn.dataset.eval;
+    checkFinishReady();
+  }
+
+  function goScreen(id) {
+    const current = document.querySelector('.screen.active');
+    if (current) {
+      current.style.transition = 'opacity 0.5s ease'; current.style.opacity = '0';
+      setTimeout(() => {
+        current.classList.remove('active'); current.style.display = 'none';
+        current.style.opacity = ''; current.style.transition = '';
+        const next = document.getElementById(id);
+        next.style.opacity = '0'; next.style.display = 'flex'; next.style.transition = 'opacity 0.5s ease';
+        requestAnimationFrame(() => setTimeout(() => {
+          next.style.opacity = '1'; next.classList.add('active');
+          setTimeout(() => { next.style.opacity = ''; next.style.transition = ''; }, 600);
+        }, 30));
+      }, 500);
+    } else {
+      const next = document.getElementById(id);
+      next.style.display = 'flex'; next.classList.add('active');
+    }
+  }
+
+  function swapBlock(html, onReady) {
+    const zone = document.getElementById('phase-zone');
+    if (currentBlock) {
+      currentBlock.classList.remove('visible');
+      setTimeout(() => {
+        zone.innerHTML = html; currentBlock = zone.querySelector('.phase-block');
+        requestAnimationFrame(() => setTimeout(() => { currentBlock.classList.add('visible'); if (onReady) onReady(); }, 50));
+      }, 500);
+    } else {
+      zone.innerHTML = html; currentBlock = zone.querySelector('.phase-block');
+      requestAnimationFrame(() => setTimeout(() => { currentBlock.classList.add('visible'); if (onReady) onReady(); }, 50));
+    }
+  }
+
+  function startReset() {
+    if (!beforeVal) return;
+    sessionStart = new Date().toISOString();
+    goScreen('s-reset'); setTimeout(runProtocol, 900);
+  }
+
+  const phases = [
+    { name: 'Chegando',      dur: 20, type: 'text',   text: 'Feche os olhos e conte até 7.\nPerceba como sua mente está.' },
+    { name: 'Respiração',    dur: 45, type: 'breath' },
+    { name: 'Foco visual',   dur: 45, type: 'focus'  },
+    { name: 'Estabilização', dur: 20, type: 'text',   text: 'Apoie os dois pés no chão.\nSinta o peso do corpo na cadeira.' },
+    { name: 'Fechando',      dur: 20, type: 'text',   text: 'Feche os olhos e conte até 7.\nComo está sua mente agora?' },
+  ];
+  const totalDur = phases.reduce((a,p) => a + p.dur, 0);
+
+  function buildTimeline() {
+    const tl = document.getElementById('tl'); tl.innerHTML = '';
+    phases.forEach((_,i) => {
+      const d = document.createElement('div'); d.className='tl-dot'; d.id='tl'+i; tl.appendChild(d);
+      if (i < phases.length-1) { const l=document.createElement('div'); l.className='tl-line'; tl.appendChild(l); }
+    });
+  }
+
+  function clearTimers() { clearInterval(phaseTimer); clearTimeout(breathTimer); clearTimeout(focusTimer); clearInterval(focusInstrTimer); }
+
+  function runProtocol() {
+    buildTimeline(); let elapsed = 0;
+    function runPhase(idx) {
+      if (idx >= phases.length) { clearTimers(); goScreen('s-checkin'); return; }
+      const ph = phases[idx];
+      const lbl = document.getElementById('phase-lbl');
+      lbl.style.opacity='0'; setTimeout(()=>{ lbl.textContent=ph.name; lbl.style.opacity='1'; },300);
+      document.querySelectorAll('.tl-dot').forEach((d,i)=>{ d.classList.toggle('done',i<idx); d.classList.toggle('active',i===idx); });
+      clearTimers();
+      if (ph.type==='text') renderText(ph.text);
+      else if (ph.type==='breath') renderBreath();
+      else renderFocus();
+      let remaining=ph.dur;
+      const cd=document.getElementById('countdown');
+      if(cd) cd.textContent=remaining+'s';
+      phaseTimer=setInterval(()=>{
+        elapsed++; remaining--;
+        const c=document.getElementById('countdown');
+        if(c) c.textContent=remaining>0?remaining+'s':'';
+        document.getElementById('prog').style.width=(elapsed/totalDur*100)+'%';
+        if(remaining<=0){clearInterval(phaseTimer);runPhase(idx+1);}
+      },1000);
+    }
+    runPhase(0);
+  }
+
+  function renderText(txt) { swapBlock(`<div class="phase-block"><div class="instr">${txt}</div></div>`); }
+
+  function renderBreath() {
+    swapBlock(`<div class="phase-block"><div class="breath-wrap"><div class="breath-word" id="bword"></div><div class="breath-ring"><div class="breath-inner" id="binner"></div></div></div></div>`,()=>{
+      let phase='in', count=0;
+      function cycle(){
+        const inner=document.getElementById('binner'), word=document.getElementById('bword');
+        if(!inner||!word) return;
+        if(phase==='in'){
+          inner.classList.add('expand');
+          word.style.opacity='0';
+          setTimeout(()=>{if(word){word.textContent='inspire';word.style.opacity='1';}},100);
+          phase='hold'; breathTimer=setTimeout(cycle,4000);
+        } else if(phase==='hold'){
+          word.style.opacity='0';
+          setTimeout(()=>{if(word){word.textContent='';word.style.opacity='1';}},100);
+          phase='out'; breathTimer=setTimeout(cycle,600);
+        } else {
+          inner.classList.remove('expand');
+          word.style.opacity='0';
+          setTimeout(()=>{if(word){word.textContent='expire';word.style.opacity='1';}},100);
+          phase='in'; count++;
+          if(count<6) breathTimer=setTimeout(cycle,4000);
+        }
+      }
+      setTimeout(cycle,400);
+    });
+  }
+
+  function renderFocus() {
+    const positions=[{top:'14%',left:'10%'},{top:'14%',left:'84%'},{top:'78%',left:'10%'},{top:'78%',left:'84%'},{top:'46%',left:'4%'},{top:'46%',left:'90%'},{top:'7%',left:'47%'},{top:'87%',left:'47%'}];
+    const dotsHtml=positions.map((p,i)=>`<div class="ambient-dot" id="ad${i}" style="top:${p.top};left:${p.left}"></div>`).join('');
+    const instrs=['Fixe os olhos no ponto.\nNão mova o olhar.','Sem mover os olhos,\nobserve o que está à esquerda.','Sem mover os olhos,\nobserve o que está à direita.','Sem mover os olhos,\nperceba tudo ao redor de uma vez.'];
+    swapBlock(`<div class="phase-block"><div class="focus-wrap"><div class="focus-instr" id="finstr">${instrs[0]}</div><div class="focus-box">${dotsHtml}<div class="focus-dot"></div></div></div></div>`,()=>{
+      let di=0;
+      function pulseDot(){
+        const dot=document.getElementById('ad'+(di%positions.length));
+        if(dot){const dx=(Math.random()-0.5)*14,dy=(Math.random()-0.5)*14;dot.style.opacity='0.65';dot.style.transform=`translate(${dx}px,${dy}px)`;setTimeout(()=>{if(dot){dot.style.opacity='0';dot.style.transform='translate(0,0)';}},2800);}
+        di++;focusTimer=setTimeout(pulseDot,2800);
+      }
+      setTimeout(pulseDot,500);
+      let t=0;
+      focusInstrTimer=setInterval(()=>{
+        t++;if(t<instrs.length){const el=document.getElementById('finstr');if(!el)return;el.style.opacity='0';el.classList.remove('highlight');setTimeout(()=>{el.textContent=instrs[t];el.classList.add('highlight');el.style.opacity='1';setTimeout(()=>{if(el)el.classList.remove('highlight');},2000);},400);}else clearInterval(focusInstrTimer);
+      },11000);
+    });
+  }
+
+  function showResult() {
+    if(!afterVal||!evalVal) return;
+    clearTimers();
+    const delta=afterVal-beforeVal;
+    document.getElementById('res-before-emoji').textContent=emojis[beforeVal];
+    document.getElementById('res-after-emoji').textContent=emojis[afterVal];
+    document.getElementById('res-before-num').textContent=beforeVal+'/5';
+    document.getElementById('res-after-num').textContent=afterVal+'/5';
+    const badge=document.getElementById('res-delta');
+    const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+    const headlines={big:['Que diferença.','Clareza de volta.','Valeu o tempo.'],small:['Já melhorou.','Um passo.','Seguindo em frente.'],zero:['Tudo bem.','Às vezes é só isso.','O corpo ouviu.'],down:['Acontece.','Nem sempre é linear.','Amanhã é outro dia.']};
+    if(delta>=2){badge.textContent='+'+delta+' pontos';badge.className='delta-badge';document.getElementById('result-headline').textContent=pick(headlines.big);}
+    else if(delta===1){badge.textContent='+1 ponto';badge.className='delta-badge';document.getElementById('result-headline').textContent=pick(headlines.small);}
+    else if(delta===0){badge.textContent='Sem variação';badge.className='delta-badge neutral';document.getElementById('result-headline').textContent=pick(headlines.zero);}
+    else{badge.textContent=delta+' ponto'+(Math.abs(delta)>1?'s':'');badge.className='delta-badge down';document.getElementById('result-headline').textContent=pick(headlines.down);}
+    goScreen('s-result');
+  }
+
+  function submitSession() {
+    const msg=document.getElementById('sending-msg');
+    const btn=document.getElementById('btn-submit');
+    msg.textContent='Enviando...';
+    btn.style.opacity='0.5'; btn.style.pointerEvents='none';
+    const payload={
+      sessionId:userId, timestamp:sessionStart,
+      beforeVal:beforeVal, beforeLabel:emojiLabels[beforeVal],
+      afterVal:afterVal, afterLabel:emojiLabels[afterVal],
+      delta:afterVal-beforeVal, evaluation:evalVal,
+      comment:document.getElementById('comment').value||''
+    };
+    goScreen('s-end');
+    setTimeout(()=>{ const box=document.getElementById('completion-box'); if(box) box.classList.add('visible'); }, 400);
+    fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>{});
+  }
+
+  function restart() {
+    beforeVal=null;afterVal=null;evalVal=null;currentBlock=null;clearTimers();
+    document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('.eval-btn').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('btn-start').classList.remove('ready');
+    document.getElementById('btn-finish').classList.remove('ready');
+    const box=document.getElementById('completion-box');
+    if(box) box.classList.remove('visible');
+    document.getElementById('comment').value='';
+    document.getElementById('prog').style.width='0%';
+    document.getElementById('phase-zone').innerHTML='';
+    document.getElementById('sending-msg').textContent='';
+    goScreen('s-welcome');
+  }
+
+  document.querySelectorAll('.screen').forEach(s=>{ if(!s.classList.contains('active')) s.style.display='none'; });
+</script>
+</body>
+</html>
